@@ -5,7 +5,6 @@ const isDev = require("electron-is-dev");
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 const callShellWithArguments = async (args) => {
-  console.log(args);
   const { stdout, stderr } = await exec("cd ~ && ls -a");
   if (stderr) {
     console.error(stderr);
@@ -14,18 +13,29 @@ const callShellWithArguments = async (args) => {
   console.log(stdout);
   return stdout;
 };
-const generate = async() => {
-  const { stdout, stderr } = await exec("cd sudoku-solver && cabal run sudoku-solver.cabal");
+const generate = async () => {
+  const { stdout, stderr } = await exec(
+    "cd sudoku-solver && cabal run sudoku-solver.cabal"
+  );
   if (stderr) {
     console.error(stderr);
     return;
   }
-  console.log(stdout);
   return stdout;
-}
+};
+const solve = async (sudoku) => {
+  const { stdout, stderr } = await exec(
+    `cd sudoku-solver && cabal run sudoku-solver.cabal ${sudoku}`
+  );
+  if (stderr) {
+    console.error(stderr);
+    return;
+  }
+  return stdout;
+};
 const initApp = async () => {
   try {
-    const { stdout, stderr } = await exec("cd sudoku-solver");
+    await exec("cd sudoku-solver");
     return true;
   } catch (err) {
     try {
@@ -95,14 +105,30 @@ ipcMain.on("ping", (e) => {
   e.sender.send("pong");
 });
 ipcMain.on("callShell", async (e) => {
-  console.log("pinga");
   const result = await callShellWithArguments("sexo");
   console.log(result);
-  e.reply("sexo", result);
+  e.reply("a", result);
 });
 initApp();
 ipcMain.on("generate", async (e) => {
   const result = await generate();
-  console.log(result);
-  e.reply("sexo", result);
+  const parsedResult = result.split("\n");
+  e.reply("return-generate", parsedResult[parsedResult.length - 2]);
+});
+ipcMain.on("solve", async (e, args) => {
+  const result = await solve(args);
+  const parsedResult = result.split("\n");
+  const solvedSudoku=parsedResult[parsedResult.length - 2];
+  e.reply("return-solve", solvedSudoku);
+});
+ipcMain.on("hint", async (e,args) => {
+  const result = await solve(args);
+  const parsedResult = result.split("\n");
+  
+  const solvedSudoku=parsedResult[parsedResult.length - 2];
+  const bothSudokus= {
+    sudoku:args,
+    solvedSudoku:solvedSudoku
+  }
+  e.reply("return-hint", bothSudokus);
 });

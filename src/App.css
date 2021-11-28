@@ -53,7 +53,12 @@
   color: black;
   text-align: center;
 }
-
+.lower-border{
+  border-bottom: 5px solid rgb(0, 132, 255);
+}
+.right-border{
+  border-right: 5px solid rgb(0, 132, 255);
+}
 input {
   border-width: 0px;
   border: none;

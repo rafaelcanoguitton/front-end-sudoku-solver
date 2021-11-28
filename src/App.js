@@ -1,8 +1,8 @@
 import logo from "./logo.svg";
 import "./App.css";
 import { useState } from "react";
-import ReactDOM from "react-dom";
 import Swal from "sweetalert2";
+import { useEffect } from "react/cjs/react.development";
 const ipcRenderer = window.require("electron").ipcRenderer;
 const App = () => {
   ipcRenderer.send("initApp");
@@ -144,21 +144,81 @@ const App = () => {
     ipcRenderer.send("generate");
   };
   const solve = () => {
-    ipcRenderer.send("solve");
+    let sudokuString = "";
+    for (let i = 0; i < sudoku.length; i++) {
+      if (sudoku[i] === "0") {
+        sudokuString += ".";
+      } else {
+        sudokuString += sudoku[i];
+      }
+    }
+    ipcRenderer.send("solve", sudokuString);
   };
-
   const hint = () => {
-    ipcRenderer.send("hint");
+    let sudokuString = "";
+    for (let i = 0; i < sudoku.length; i++) {
+      if (sudoku[i] === "0") {
+        sudokuString += ".";
+      } else {
+        sudokuString += sudoku[i];
+      }
+    }
+    ipcRenderer.send("hint", sudokuString);
   };
-  ipcRenderer.on("return-generate", (event, arg) => {
-    setSudoku(arg);
-  });
-  ipcRenderer.on("return-solve", (event, arg) => {
-    setSudoku(arg);
-  });
-  ipcRenderer.on("return-hint", (event, arg) => {
-    setSudoku(arg);
-  });
+  useEffect(() => {
+    ipcRenderer.on("return-generate", (event, arg) => {
+      console.log(arg);
+      let generatedSudoku = [];
+      for (let i = 0; i < 81; i++) {
+        if (arg[i] === ".") {
+          generatedSudoku.push("0");
+        } else {
+          generatedSudoku.push(arg[i]);
+        }
+      }
+      console.log(generatedSudoku);
+      setSudoku(generatedSudoku);
+    });
+    ipcRenderer.on("return-solve", (event, arg) => {
+      let solvedSudoku = [];
+      for (let i = 0; i < 81; i++) {
+        if (arg[i] === ".") {
+          solvedSudoku.push("0");
+        } else {
+          solvedSudoku.push(arg[i]);
+        }
+      }
+      setSudoku(solvedSudoku);
+    });
+    ipcRenderer.on("return-hint", (event, arg) => {
+      let solvedSudoku = [];
+      for (let i = 0; i < 81; i++) {
+        if (arg.solvedSudoku[i] === ".") {
+          solvedSudoku.push("0");
+        } else {
+          solvedSudoku.push(arg.solvedSudoku[i]);
+        }
+      }
+      let newSudoku = [];
+      for (let i = 0; i < 81; i++) {
+        if (arg.sudoku[i] === ".") {
+          newSudoku.push("0");
+        } else {
+          newSudoku.push(arg.sudoku[i]);
+        }
+      }
+      let indexesWith0 = [];
+      for (let i = 0; i < 81; i++) {
+        if (sudoku[i] === "0") {
+          indexesWith0.push(i);
+        }
+      }
+      let randomIndex = Math.floor(Math.random() * indexesWith0.length);
+      newSudoku[indexesWith0[randomIndex]] =
+        solvedSudoku[indexesWith0[randomIndex]];
+      setSudoku(newSudoku);
+    });
+  }, []);
   return (
     <div className="App">
       <header className="App-header">
@@ -166,8 +226,16 @@ const App = () => {
           <h1>Sudoku App</h1>
           <div className="grid">
             {sudoku.map((value, index) => {
+              let classname = "grid-item";
+              if((index+1>18 && index+1<28)||(index+1>45 && index+1<55)){
+                classname += " lower-border";
+              }
+              const rightBorders=[3,6,12,15,21,24,30,33,39,42,48,51,57,60,66,69,75,78];
+              if(rightBorders.includes(index+1)){
+                classname += " right-border";
+              }
               return (
-                <div className="grid-item" id={index}>
+                <div className={classname} id={index}>
                   <input
                     id={index}
                     value={value == "0" ? "" : value}
@@ -181,17 +249,25 @@ const App = () => {
             <button
               className="sudoku-button"
               onClick={() => {
-                console.log("xd");
-                ipcRenderer.send("generate");
+                generate();
               }}
             >
               Generate
             </button>
-            <button className="sudoku-button">Solve</button>
+            <button
+              className="sudoku-button"
+              onClick={() => {
+                solve();
+              }}
+            >
+              Solve
+            </button>
             <button className="sudoku-button" onClick={clear}>
               Clear
             </button>
-            <button className="sudoku-button">Hint</button>
+            <button className="sudoku-button" onClick={hint}>
+              Hint
+            </button>
           </div>
         </div>
       </header>
