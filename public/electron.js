@@ -76,9 +76,8 @@ function createWindow() {
       : `file://${path.join(__dirname, "../build/index.html")}`
   );
   // Open the DevTools.
-  if (isDev) {
     win.webContents.openDevTools({ mode: "detach" });
-  }
+  
 }
 
 // This method will be called when Electron has finished
@@ -105,7 +104,7 @@ ipcMain.on("ping", (e) => {
   e.sender.send("pong");
 });
 ipcMain.on("callShell", async (e) => {
-  const result = await callShellWithArguments("sexo");
+  const result = await callShellWithArguments("test");
   console.log(result);
   e.reply("a", result);
 });

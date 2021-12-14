@@ -1,8 +1,7 @@
 import logo from "./logo.svg";
 import "./App.css";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import Swal from "sweetalert2";
-import { useEffect } from "react/cjs/react.development";
 const ipcRenderer = window.require("electron").ipcRenderer;
 const App = () => {
   ipcRenderer.send("initApp");
